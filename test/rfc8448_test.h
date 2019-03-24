@@ -1,0 +1,8 @@
+#ifndef RFC8448_TEST_INCLUDED_
+#define RFC8448_TEST_INCLUDED_
+
+struct CIPHERSET;
+
+uint32_t rfc8448_test(const CIPHERSET& cset);
+
+#endif //RFC8448_TEST_INCLUDED_
