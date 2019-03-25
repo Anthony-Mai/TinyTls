@@ -78,7 +78,7 @@ extern "C" {
 
 extern CIPHERSET gCipherSet;
 
-const CIPHERSET* InitCiphers(CIPHERSET* pCipherSet, void* pUserData);
+const CIPHERSET* InitCiphers(CIPHERSET* pCipherSet);
 
 #ifdef __cplusplus
 } //extern "C"

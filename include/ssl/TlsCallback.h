@@ -42,7 +42,7 @@ struct TlsCBData {
 //   Key size is implied from ECC Group. RSA Key size is assumed to be 2048 bits (256 bytes) only. Returns either ECC_GROUP, or RSA key size.
 // CB_SERVER_CIPHER:
 //   rawInt[0] is proposed server cipher like TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256. rawInt[1] is a potential replacement. When callback,
-//   either do nothing, or swap the two values if rawInt[1] is a more preferable cipher to use. See SSL_CIPHERS.
+//   either do nothing, or swap the two values if rawInt[1] is a more preferable cipher to use. See TLS_CIPHER.
 // CB_CLIENT_CIPHER:
 //   rawInt[o..n] is set to client supported ciphers. After last one it ends with a 0 entry. Returns the number of supported ciphers included.
 // CB_CLIENT_SESSIONID:

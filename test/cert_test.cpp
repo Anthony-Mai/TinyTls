@@ -80,7 +80,7 @@ int DoCertTest()
     CERT_STATUS eStatus = CS_UNKNOWN;
     const CIPHERSET* pMyCiphers = NULL;
 
-    pMyCiphers = InitCiphers(&gCipherSet, NULL);
+    pMyCiphers = InitCiphers(&gCipherSet);
 
     StartCerts(malloc, free, pMyCiphers);
     pRoot = CreateCert(CS_ROOT, 0);

@@ -77,8 +77,6 @@
 #include "sha256.h"
 #include "ripemd.h"
 
-#include "ssl_ciphers.h"
-
 CIPHERSET gCipherSet;
 
 void SetSha384(CIPHER* pCipher);
@@ -88,12 +86,7 @@ void SetRsa(RSA* pRsa);
 
 void SetP256(ECC* pEcc);
 
-const CIPHERSET* InitCiphers
-(
-    CIPHERSET* pCipherSet,
-    void* pUserData
-)
-{
+const CIPHERSET* InitCiphers(CIPHERSET* pCipherSet) {
     if (pCipherSet == NULL) pCipherSet = &gCipherSet;
 
     SetSha1(&(pCipherSet->sha1));

@@ -104,7 +104,7 @@ public:
     uint32_t n_;
 
     MyCertSet(const CIPHERSET& c, const KEYPAIR& caKeyPair, const KEYPAIR& subPubKey, const X509::X509NAME& ca, const X509::X509NAME& sub, const char* names[], uint32_t isTime, uint32_t exTime, uint64_t sn)
-        : cset_(c), caKeyPair_(caKeyPair), subPubKey_(subPubKey), issuer_(ca), subject_(sub), altNames_(names), issueTime_(isTime), expireTime_(exTime), n_(0), serial_(sn) {}
+        : cset_(c), caKeyPair_(caKeyPair), subPubKey_(subPubKey), issuer_(ca), subject_(sub), altNames_(names), issueTime_(isTime), expireTime_(exTime), serial_(sn), n_(0) {}
 };
 
 
@@ -221,33 +221,15 @@ const uint8_t* certGen(
     static u8 tmp[2048];
     u8* p0 = tmp;
     u8* p = p0;
-    uint32_t n= 0;
 
     MyCertSet myCertSet(*cipherSet, *pCaKeyPair, *pSubPubKey, *issuer, *subject, altNames, issueTime, expireTime, serial_num);
 
     memset(tmp, 0, sizeof(tmp));
 
-    uint nSize = 0, nCurTime = 0x5c68d200;
-
+    uint nSize = 0;
     {
         X509v3 cer(p, myCallback, &myCertSet);
         nSize = cer.size();
     }
     return tmp;
-/*
-    {
-        FILE* fout = fopen(certName, "wb");
-        fwrite(tmp, 1, nSize, fout);
-        fclose(fout);
-    }
-    {
-        CERT* pCert = CreateCert(CS_ROOT, nCurTime);
-        uint nParsed = ParseCert(pCert, tmp, nSize);
-        CERT_STATUS status = AuthenticateCert(pCert, NULL);
-
-        status = status;
-    }
-
-    return 0;
-*/
 }

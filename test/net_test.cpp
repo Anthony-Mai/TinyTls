@@ -89,7 +89,6 @@
 #include "cert.h"
 #include "certSamples.h"
 
-#include "ssl_ciphers.h"
 #include "ecc_x25519.h"
 
 #include "TcpSockLinux.h"
@@ -295,7 +294,7 @@ void* NetClientThread(void* pParam)
     CIPHERSET cipherSet;
     MyAppContext appCtx(cipherSet);
 
-    InitCiphers(&cipherSet, nullptr);
+    InitCiphers(&cipherSet);
 
     appCtx.server_name_ = SERVER_NAME;
 
@@ -389,7 +388,7 @@ void* NetServerThread(void* pParam)
     int     nRecv = 0;
     CIPHERSET cipherSet;
 
-    InitCiphers(&cipherSet, nullptr);
+    InitCiphers(&cipherSet);
 
     if (!tcpListen.GetSock()) {
         printf("Failed to create listen socket. Maybe try sudo?\n");

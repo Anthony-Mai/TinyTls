@@ -31,7 +31,7 @@ private:
 class Asn0 {
 private: const pu8 p0_; protected: pu8& p_;
 public:
-    Asn0(pu8& s, u8 t) : p_((*s++ = t, *s++ = 0x00, s)), p0_(s + 2) {}
+    Asn0(pu8& s, u8 t) : p0_(s + 2), p_((*s++ = t, *s++ = 0x00, s)) {}
     ~Asn0() { p0_[-1] = u8(p_ - p0_); }
 
     operator pu8& () const { return p_; }
@@ -44,7 +44,7 @@ private:
 class Asn1 {
 private: const pu8 p0_; protected: pu8& p_;
 public:
-    Asn1(pu8& s, u8 t) : p_((*s++ = t, *s++ = 0x81, *s++ = 0x00, s)), p0_(s + 3) {}
+    Asn1(pu8& s, u8 t) : p0_(s + 3), p_((*s++ = t, *s++ = 0x81, *s++ = 0x00, s)) {}
     ~Asn1() { p0_[-1] = u8(p_ - p0_); }
 
     operator pu8& () const { return p_; }
@@ -57,7 +57,7 @@ private:
 class Asn2 {
 private: const pu8 p0_; protected: pu8& p_;
 public:
-    Asn2(pu8& s, u8 t) : p_((*s++ = t, *s++ = 0x82, *s++ = 0x00, *s++ = 0x00, s)), p0_(s + 4) {}
+    Asn2(pu8& s, u8 t) : p0_(s + 4), p_((*s++ = t, *s++ = 0x82, *s++ = 0x00, *s++ = 0x00, s)) {}
     ~Asn2() { size_t n = p_ - p0_; p0_[-2] = u8(n >> 8); p0_[-1] = u8(n); }
 
     operator pu8& () const { return p_; }
@@ -70,7 +70,7 @@ private:
 class Asn3 {
 private: const pu8 p0_; protected: pu8& p_;
 public:
-    Asn3(pu8& s, u8 t) : p_((*s++ = t, *s++ = 0x00, *s++ = 0x00, *s++ = 0x00, s)), p0_(s + 4) {}
+    Asn3(pu8& s, u8 t) : p0_(s + 4), p_((*s++ = t, *s++ = 0x00, *s++ = 0x00, *s++ = 0x00, s)) {}
     ~Asn3() { size_t n = p_ - p0_; p0_[-3] = u8(n >> 16); p0_[-2] = u8(n >> 8), p0_[-1] = u8(n); }
 
     operator pu8& () const { return p_; }

@@ -107,7 +107,7 @@ int dnsTest()
 int main(int argc, char* argv[])
 {
     int ret = 0;
-    const CIPHERSET* pCipherSet = InitCiphers(&gCipherSet, NULL);
+    const CIPHERSET* pCipherSet = InitCiphers(&gCipherSet);
 
     gpCipherSet = pCipherSet;
 

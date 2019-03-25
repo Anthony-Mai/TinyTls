@@ -610,8 +610,8 @@ uint BN_isNotBigger(const BN* pX, const BN* pY)
 uint BN_ShiftW(BN* pX, uint s)
 {
     uint    i, n = 0;
-
-    n = pX->data[s-1];
+    if (s == 0) return 0;
+    n = pX->data[(int)s-1];
     for (i=0; s<BN_SIZE; i++, s++) {
         pX->data[i] = pX->data[s];
     }

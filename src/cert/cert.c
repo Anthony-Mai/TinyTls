@@ -703,7 +703,6 @@ uint PutASN1Item(ASN1ITEM* pItem, uchar* pMsg) {
 }
 
 uint PutKeyItem(uchar* pMsg, const uchar* pKey, uint cbKey) {
-    int n = 0;
     const uchar* p0 = pMsg;
     *pMsg++ = TAG_INTEGER; *pMsg++ = 0x82;
     *pMsg++ = (cbKey >> 8); *pMsg++ = cbKey;
@@ -1222,7 +1221,6 @@ uint GenCert(CERT* pCert, CERT* pRoot, uchar* pMsg, uint64_t nSerial, const ucha
     //    signatureAlgorithm   AlgorithmIdentifier,
     //    signatureValue       BIT STRING }
 
-    uchar* pCertHead = pMsg;
     // Certificate  :: = SEQUENCE{
     item.nType = SEQUENCE_TAG;
     item.nSize = 0x03d0;
@@ -1319,7 +1317,6 @@ uint GenCert(CERT* pCert, CERT* pRoot, uchar* pMsg, uint64_t nSerial, const ucha
 uint ParseCert(CERT* pCert, const uchar* pMsg, uint nMsgSize) {
     const uchar*    p0 = pMsg;
     uint            nParseSize;
-    uint            nCertSize;
     const uchar*    pHashContent;
     uint            nHashSize;
     ASN1ITEM        item;
@@ -1332,7 +1329,6 @@ uint ParseCert(CERT* pCert, const uchar* pMsg, uint nMsgSize) {
         return 0;
     }
 
-    nCertSize = item.nSize;
     pHashContent = pMsg;
 
     // Next is a SEQUENCE tag enclosing the TBSCertificate part.
@@ -1795,7 +1791,7 @@ uint ParseTBS(CERT* pCert, const uchar* pMsg, uint nMsgSize) {
 * Returns:      Number of bytes parsed.
 ******************************************************************************/
 uint ParseX509ID(X509NAME* pName, const uchar* pMsg, uint nMsgSize) {
-    uint        nParsed = 0, nParseSize = 0;
+    uint        nParsed = 0;
     uint        nHeadSize;
     ASN1ITEM    item;
 
@@ -1877,17 +1873,12 @@ uint ParseX509ID(X509NAME* pName, const uchar* pMsg, uint nMsgSize) {
                     memcpy(pName->CommonName, tmpStr, sizeof(pName->CommonName));
                     break;
                 case OID_NAME_ORG:
-                    //pMd5->Input(&md5Ctx, pMsg, item.nSize);
                     memcpy(pName->orgName, tmpStr, sizeof(pName->orgName));
                     break;
                 case OID_NAME_UNIT:
-                    //pMd5->Input(&md5Ctx, pMsg, item.nSize);
                     memcpy(pName->orgUnit, tmpStr, sizeof(pName->orgUnit));
-                    //Just in case there is no common name.
-                    //memcpy(pName->CommonName, tmpStr, sizeof(pName->CommonName));
                     break;
                 case OID_NAME_LOCAL:
-                    //pMd5->Input(&md5Ctx, pMsg, item.nSize);
                     memcpy(pName->localName, tmpStr, sizeof(pName->localName));
                     break;
                 case OID_NAME_STATE:
@@ -1911,8 +1902,6 @@ uint ParseX509ID(X509NAME* pName, const uchar* pMsg, uint nMsgSize) {
             nParsed += item.nSize;
         }
     }
-
-    //pMd5->Digest(&md5Ctx, pName->md5digest2);
 
     // We should have parsed exactly all the bytes.
     if (nParsed != nMsgSize) {
@@ -2150,7 +2139,6 @@ uint VerifySignature(const CERT* pCert, const CERT* pSigner) {
         r |= item.nType ^ OID_TAG;
         if (r == 0) {
             OID oid = GetOID(p, item.nSize);
-            //r |= oid ^ OID_DIGEST_SHA1;
         }
         assert(r == 0);
         break;
@@ -2312,7 +2300,6 @@ void SetEcc(CERT* pCert, const uchar* eccPubKey, uint eccGroup) {
     }
     memcpy(&(pCert->pubKey[sizeof(pCert->pubKey) - pCert->pubKeyLen]), eccPubKey, pCert->pubKeyLen);
     pCert->pubKeyLen |= 0;
-    eccGroup;
 }
 
 /******************************************************************************
@@ -2509,7 +2496,7 @@ uint DoCertTest()
     CERT_STATUS eStatus = CS_UNKNOWN;
     const CIPHERSET* pMyCiphers = NULL;
 
-    pMyCiphers = InitCiphers(&gCipherSet, NULL);
+    pMyCiphers = InitCiphers(&gCipherSet);
 
     StartCerts(malloc, free, pMyCiphers);
     pRoot = CreateCert(CS_ROOT, 0);

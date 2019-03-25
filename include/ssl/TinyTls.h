@@ -4,7 +4,6 @@
 #include "BaseTls.h"
 
 #include "ssl_defs.h"
-#include "ssl_ciphers.h"
 
 #include "TlsCallback.h"
 
@@ -131,9 +130,9 @@ private:
     void*       m_userContext;
 
     SSL_STATE   eState;
-    SSL_CIPHER  ePendingCipher;
-    SSL_CIPHER  eClientCipher;
-    SSL_CIPHER  eServerCipher;
+    TLS_CIPHER  ePendingCipher;
+    TLS_CIPHER  eClientCipher;
+    TLS_CIPHER  eServerCipher;
 
     uint    m_eccGroup;
     uint    m_sigAlg;
@@ -145,8 +144,8 @@ private:
     uint    serverMsgLen;
     uint    nNetOutSent;
     uint    nNetOutSize;
-    uint    nAppOutSize;
     uint    nAppOutRead;
+    uint    nAppOutSize;
     uint    clientSequenceL;    //Low DWORD. Sequence Number is 64 bits
     uint    clientSequenceH;    //High DWORD.Sequence number is 64 bits
     uint    serverSequenceL;    //Low DWORD. Sequence Number is 64 bits

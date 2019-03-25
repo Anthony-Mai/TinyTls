@@ -83,7 +83,7 @@
 #include "TlsCallback.h"
 #include "BaseTls.h"
 #include "cert.h"
-#include "ssl_ciphers.h"
+#include "ssl_defs.h"
 #include "certSamples.h"
 #include "cipher.h"
 

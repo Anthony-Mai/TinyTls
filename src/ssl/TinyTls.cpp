@@ -79,8 +79,6 @@
 #include "cipher.h"
 #include "cert.h"
 
-#include "ssl_ciphers.h"
-
 #include "ecc_x25519.h"
 #include "ecc_p256.h"
 
@@ -138,21 +136,21 @@ SSL_RESULT SSL_AddRootCertificate
 }
 
 
-static bool needServerKE(SSL_CIPHERS eCipher) {
-    static const SSL_CIPHERS gSKECiphers[] = {
+static bool needServerKE(TLS_CIPHER eCipher) {
+    static const TLS_CIPHER gSKECiphers[] = {
         TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
         TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
         TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
         TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
-        TLS_NULL_WITH_NULL_NULL };
+        TLS_NONE };
     uint i;
-    for (i = 0; gSKECiphers[i] != TLS_NULL_WITH_NULL_NULL; i++) {
+    for (i = 0; gSKECiphers[i] != TLS_NONE; i++) {
         if (gSKECiphers[i] == eCipher) return true;
     }
     return false;
 }
 
-static const SSL_CIPHERS gSupportedCipher[] = {
+static const TLS_CIPHER gSupportedCipher[] = {
     // New TLS1.3 ciphers
     TLS_AES_128_GCM_SHA256,
     TLS_CHACHA20_POLY1305_SHA256,
@@ -164,9 +162,9 @@ static const SSL_CIPHERS gSupportedCipher[] = {
     // Old none ECC cipher.
     TLS_RSA_WITH_AES_128_GCM_SHA256,
     TLS_EMPTY_RENEGOTIATION_INFO_SCSV,
-    TLS_NULL_WITH_NULL_NULL };
+    TLS_NONE };
 
-static uint32_t CipherRank(SSL_CIPHERS eCipher)
+static uint32_t CipherRank(TLS_CIPHER eCipher)
 {
     uint i;
     for (i = 0; gSupportedCipher[i]; i++) {
@@ -276,24 +274,23 @@ TinyTls::TinyTls(
     ) :
     m_sock(sock),
     m_cipherSet(cipherSet),
-    nStartTime(curTimeSec),
-    nCurrentTime(curTimeSec),
     m_bIsClient(isClient),
     m_attrs(ATT_NONE),
+    hsCount_(0),
     m_userCallBack(callBack),
     m_userContext(pUserContext),
     eState(SSLSTATE_RESET),
-    ePendingCipher(CIPHER_NOTSET),
-    eClientCipher(CIPHER_NOTSET),
-    eServerCipher(CIPHER_NOTSET),
+    ePendingCipher(TLS_NONE),
+    eClientCipher(TLS_NONE),
+    eServerCipher(TLS_NONE),
     m_eccGroup(ECC_NONE),
     m_sigAlg(SIGALG_NONE),
     serverMsgOff(0),
     serverMsgLen(0),
-    nNetOutSize(0),
     nNetOutSent(0),
-    nAppOutSize(0),
+    nNetOutSize(0),
     nAppOutRead(0),
+    nAppOutSize(0),
     clientSequenceL(0),
     clientSequenceH(0),
     serverSequenceL(0),
@@ -301,6 +298,8 @@ TinyTls::TinyTls(
     eLastError(SSL_OK),
     pServerCert(nullptr),
     pCertData(nullptr),
+    nStartTime(curTimeSec),
+    nCurrentTime(curTimeSec),
     nSessionIDLen(0),
     nPreMasterSize(SSL_SECRET_LEN),
     pTemp(nullptr),
@@ -332,12 +331,11 @@ int TinyTls::Write(const unsigned char* pData, size_t cbSize)
 
 int TinyTls::Read(unsigned char* pBuff, size_t cbSize)
 {
-    uint nRead = 0, off, chunk;
     unsigned char* pMsg = pBuff;
     while ((pMsg - pBuff) < (int)cbSize) {
-        chunk = nAppOutSize - nAppOutRead;
+        uint chunk = nAppOutSize - nAppOutRead;
         if (chunk == 0) break;
-        off = nAppOutRead & (sizeof(appoutMsg) - 1);
+        uint off = nAppOutRead & (sizeof(appoutMsg) - 1);
         if (chunk > sizeof(appoutMsg) - off) { chunk = sizeof(appoutMsg) - off; }
         if ((int)chunk > pBuff +cbSize - pMsg) chunk = pBuff + cbSize - pMsg;
         memcpy(pMsg, appoutMsg + off, chunk);
@@ -355,8 +353,8 @@ SSL_STATE TinyTls::State()
 void TinyTls::OnTcpConnect()
 {
     nStartTime = nCurrentTime;
-    eClientCipher = CIPHER_NOTSET;
-    eServerCipher = CIPHER_NOTSET;
+    eClientCipher = TLS_NONE;
+    eServerCipher = TLS_NONE;
     serverMsgOff = 0;
     serverMsgLen = 0;
 
@@ -379,8 +377,8 @@ uint TinyTls::ProcessState()
     case SSLSTATE_TCPCONNECTED:
         OnTcpConnect(); break;
         nStartTime = nCurrentTime;
-        eClientCipher = CIPHER_NOTSET;
-        eServerCipher = CIPHER_NOTSET;
+        eClientCipher = TLS_NONE;
+        eServerCipher = TLS_NONE;
         serverMsgOff = 0;
         serverMsgLen = 0;
 
@@ -431,7 +429,7 @@ uint TinyTls::ProcessState()
                 (sizeof(netoutMsg) - nNetOutSize));
             eState = SSLSTATE_SERVER_CERTREQUEST;
             break;
-        } else if (needServerKE(SSL_CIPHERS(ePendingCipher))) {
+        } else if (needServerKE(ePendingCipher)) {
             // Has server key exchange message
             nNetOutSize += CreateServerKeyExchangeMsg(
                 &(netoutMsg[nNetOutSize]),
@@ -542,7 +540,7 @@ uint TinyTls::ProcessState()
         if (isTls13()) {
             setClientKey();
         }
-        if (eServerCipher == CIPHER_NOTSET) {
+        if (eServerCipher == TLS_NONE) {
             eState = SSLSTATE_SERVER_FINISH2;
         } else {
             eState = SSLSTATE_HANDSHAKE_DONE;
@@ -591,7 +589,7 @@ uint TinyTls::ProcessState()
         if (isTls13()) {
             mainSecret(); // For server only.
             eState = SSLSTATE_CLIENT_FINISH2;
-        } else if (eClientCipher == CIPHER_NOTSET) {
+        } else if (eClientCipher == TLS_NONE) {
             eState = SSLSTATE_CLIENT_FINISH2;
         } else {
             eState = SSLSTATE_HANDSHAKE_DONE;
@@ -723,8 +721,8 @@ SSL_STATE TinyTls::Work(unsigned int curTimeSec, SSL_STATE newState /*= SSLSTATE
 
     case SSLSTATE_TCPCONNECTED:
         nStartTime = nCurrentTime;
-        eClientCipher = CIPHER_NOTSET;
-        eServerCipher = CIPHER_NOTSET;
+        eClientCipher = TLS_NONE;
+        eServerCipher = TLS_NONE;
         serverMsgOff = 0;
         serverMsgLen = 0;
 
@@ -804,7 +802,6 @@ uint TinyTls::CreateServerHelloMsg
     uint    nBuffSize
 )
 {
-    uint    i, nLen = 0, nMacSize = 0;
     uchar*  pMsg = pMsgBuff;
     Handshake handshake(*this, pMsg);
     uchar*  pExtSize = nullptr;
@@ -814,7 +811,7 @@ uint TinyTls::CreateServerHelloMsg
     nTemp2 = 0; //No client certificate request by default.
 
     //Generate a ServerRandom
-    for (i = 0; i < sizeof(serverRandom);)
+    for (int i = 0; i < sizeof(serverRandom);)
     {
         uint   nRand = gfRandom();
         *((uint*)&(serverRandom[i])) = nRand;
@@ -895,7 +892,7 @@ uint TinyTls::CreateServerHelloMsg
     }
 
     // Extension: ec_point_formats (len=4)
-    if (needServerKE(SSL_CIPHERS(ePendingCipher))) {
+    if (needServerKE(ePendingCipher)) {
         *pMsg++ = EXT_EC_POINT_FORMATS >> 8; *pMsg++ = EXT_EC_POINT_FORMATS;
         *pMsg++ = 0x00; *pMsg++ = 0x04; // Length: 4
         *pMsg++ = 0x03;                 // EC point formats Length: 3
@@ -1681,8 +1678,6 @@ uint TinyTls::CreateClientKeyExchangeMsg
     uint    nKeyLen, nMacSize = 0;
     uchar*  pMsg = pMsgBuf;
     uint    slen = 0;
-    uint    nUsed = 0;
-    uint    nRand = 0;
     Handshake handshake(*this, pMsg);
 
     nKeyLen = sizeof(m_eccClient);
@@ -1694,7 +1689,7 @@ uint TinyTls::CreateClientKeyExchangeMsg
     *pMsg++ = (uchar)(nKeyLen >> 0);
 
     // This really depends on ePendingCipher. Either ECC DH, or RSA
-    if (needServerKE(SSL_CIPHERS(ePendingCipher))) {
+    if (needServerKE(ePendingCipher)) {
 
         //EC Diffie - Hellman Server Params
         *pMsg++ = slen = sizeof(m_eccClient); // Pubkey Length: 32
@@ -1828,7 +1823,7 @@ uint TinyTls::EncryptWithMAC(
     ChachaNounce nc(*(const ChachaNounce*)pIV);
 
     switch(m_bIsClient? eClientCipher : eServerCipher) {
-    case CIPHER_NOTSET: return 0;
+    case TLS_NONE: return 0;
     case TLS_RSA_EXPORT_WITH_RC4_40_MD5:    // 0x00, 0x03   N[RFC4346][RFC6347]
     case TLS_RSA_WITH_RC4_128_MD5:          // 0x00, 0x04   N[RFC5246][RFC6347]
     case TLS_RSA_WITH_RC4_128_SHA:          // 0x00, 0x05   N[RFC5246][RFC6347]
@@ -2079,7 +2074,7 @@ uint TinyTls::ParseNetMsg
         nMsgSize = nContentSize;    //nMsgSize is nContentSize minus the MAC
 
         if ((cContentType != CONTENT_CHANGECIPHERSPEC) &&
-            (CIPHER_NOTSET != (m_bIsClient ? eServerCipher : eClientCipher))) {
+            (TLS_NONE != (m_bIsClient ? eServerCipher : eClientCipher))) {
             //If the cipher is on already, we need to decrypt using peer key.
             const uchar* pKey;
             uchar* pIV;
@@ -2096,9 +2091,9 @@ uint TinyTls::ParseNetMsg
 
             switch (m_bIsClient ? eServerCipher : eClientCipher)
             {
-            case CIPHER_RSA_RC4_40_MD5:
-            case CIPHER_RSA_RC4_128_MD5:
-            case CIPHER_RSA_RC4_128_SHA:
+            case TLS_RSA_EXPORT_WITH_RC4_40_MD5:
+            case TLS_RSA_WITH_RC4_128_MD5:
+            case TLS_RSA_WITH_RC4_128_SHA:
                 assert(0);
                 break;
 
@@ -2236,8 +2231,7 @@ uint TinyTls::CreateClientHelloMsg
     uint    nBuffSize
 )
 {
-    uint    i, nLen = 0, nMacSize = 0; // , nPskLen = 0;
-    //const uchar* pPsk = nullptr;
+    uint    i;
     uchar*  pMsg = pMsgBuff;
     Handshake handshake(*this, pMsg);
     TlsCBData cbData;
@@ -2503,7 +2497,7 @@ uint TinyTls::ParseClientHello(
     int   cbExtension = 0;
     int   extType = 0;
     int   extLen = 0;
-    uint  theCipher = CIPHER_NOTSET, tls13Cipher = CIPHER_NOTSET;
+    uint  theCipher = TLS_NONE, tls13Cipher = TLS_NONE;
     const uchar* p = pMsg;
     const uchar* pPsk = nullptr;
 
@@ -2547,18 +2541,18 @@ uint TinyTls::ParseClientHello(
         TlsCBData cbData;
         cbData.cbType = TlsCBData::CB_SERVER_CIPHER;
 
-        if (((theCipher>>8) == 0x13) && CipherRank(SSL_CIPHERS(theCipher)) < CipherRank(SSL_CIPHERS(tls13Cipher))) {
+        if (((theCipher>>8) == 0x13) && CipherRank(TLS_CIPHER(theCipher)) < CipherRank(TLS_CIPHER(tls13Cipher))) {
             tls13Cipher = theCipher; // Remember the best supported TLS1.3 cipher.
         }
 
-        if (CipherRank(SSL_CIPHERS(theCipher)) < CipherRank(SSL_CIPHERS(ePendingCipher))) {
+        if (CipherRank(TLS_CIPHER(theCipher)) < CipherRank(ePendingCipher)) {
             cbData.data.rawInt[0] = theCipher; cbData.data.rawInt[1] = ePendingCipher;
-            ePendingCipher = SSL_CIPHER(theCipher);
+            ePendingCipher = TLS_CIPHER(theCipher);
         } else {
             cbData.data.rawInt[0] = ePendingCipher; cbData.data.rawInt[1] = theCipher;
         }
         m_userCallBack(m_userContext, &cbData);
-        ePendingCipher = SSL_CIPHER(cbData.data.rawInt[0]);
+        ePendingCipher = TLS_CIPHER(cbData.data.rawInt[0]);
     }
 
     nCompression = *p++;
@@ -2713,8 +2707,8 @@ uint TinyTls::ParseClientHello(
         p += extLen;
     }
 
-    if (hasTls13 && (tls13Cipher != CIPHER_NOTSET)) {
-        if ((ePendingCipher >> 8) != 0x13) ePendingCipher = SSL_CIPHER(tls13Cipher);
+    if (hasTls13 && (tls13Cipher != TLS_NONE)) {
+        if ((ePendingCipher >> 8) != 0x13) ePendingCipher = TLS_CIPHER(tls13Cipher);
         earlySecret(pPsk, nPskLen);
     }
 
@@ -3003,7 +2997,7 @@ uint TinyTls::ParseServerHello(
     //The final byte is Compression. We support only 0, no compression.
     nCompression = *pMsg++;
 
-    ePendingCipher = SSL_CIPHER(nPendingCipher);
+    ePendingCipher = TLS_CIPHER(nPendingCipher);
 
     if ((pMsg-pMsgBuf) >= (int)nMsgSize) {
         // No extension. We are done
@@ -3192,12 +3186,9 @@ uint TinyTls::ParseCertificateMsg(
 
         //The very first certificate is the server certificate. Anything that follows
         //are CA certificates that need to be inserted.
-        if (pServerCert == NULL)
-        {
+        if (pServerCert == NULL) {
             pServerCert = pCert;
-        }
-        else if (NULL == InsertCert(pCert, &pMidCerts))
-        {
+        } else if (NULL == InsertCert(pCert, &pMidCerts)) {
             //Can not insert certificate since it exists already as root.
             //So ignore the one coming from the network.
             DestroyCert(pCert);
@@ -3211,13 +3202,10 @@ uint TinyTls::ParseCertificateMsg(
         //Please note here. The certificate may or may not be verified,
         //depends on eStatus. It is up to application to acccept if the
         // certificate is questionable.
-        if ((eStatus & (CS_OK | CS_VERIFIED)) == (CS_OK | CS_VERIFIED))
-        {
+        if ((eStatus & (CS_OK | CS_VERIFIED)) == (CS_OK | CS_VERIFIED)) {
             //Certificate is OK and can be trusted.
             eState = SSLSTATE_SERVER_CERT_VERIFY;
-        }
-        else
-        {
+        } else {
             //Certificate questionable. Prompt the application to decide
             TlsCBData cbData;
             cbData.cbType = TlsCBData::CB_CERTIFICATE_ALERT;
@@ -3251,8 +3239,7 @@ uint TinyTls::GetClientVerifyInfo(uchar* pMsgBuff)
 {
     uint   nVerifySize;
 
-    if (eClientCipher == CIPHER_NONE)
-    {
+    if (eClientCipher == CIPHER_NONE) {
         //No prior handshake, so the client verify info does not exist.
         nVerifySize = 0;
     } else if ((preMasterSecret[1] < SSL_VERSION_MINOR1) ||
@@ -3401,7 +3388,6 @@ uint TinyTls::ParseCertificateVerify(
     uint    nParsed = 0;
     uint    nSize;
     uint    nCopy;
-    struct TBSCERTIFICATE* pCert = NULL;
     uchar   signature[256];
     uchar   tmpMsg[256]; //MAX signature block size for 2048 bits RSA key
 
@@ -3454,13 +3440,12 @@ uint TinyTls::ParseClientKeyExchange(
     uint            cbLen
     )
 {
-    uint   nMsgLen = 0, nKeyLen = 0, eccGroup = 0;
-    uint   nParsed = 0, slen = 0;
+    uint   nKeyLen = 0, eccGroup = 0;
     const uchar* pMsg = pMsgBuf;
     uchar   msgBuff[256];   //Max 2048 bits RSA key
     TlsCBData cbData;
 
-    if (needServerKE(SSL_CIPHERS(ePendingCipher))) {
+    if (needServerKE(ePendingCipher)) {
         nKeyLen = *pMsg++;
         assert(nKeyLen == sizeof(m_eccClient));
         memcpy(m_eccClient, pMsg, sizeof(m_eccClient));
@@ -3532,8 +3517,7 @@ uint TinyTls::ParseServerKeyExchange(
     uint            cbLen
 )
 {
-    uint   nMsgLen = 0, nKeyLen = 0;
-    uint   nParsed = 0, nSigLen, err = 0;
+    uint   nSigLen = 0, err = 0;
     const uchar* pMsg = pMsgBuf;
     uchar  msgHash[256];
 
@@ -3550,7 +3534,7 @@ uint TinyTls::ParseServerKeyExchange(
     // Named Curve: example x25519 (0x001d)
     m_eccGroup = uint(*pMsg++) << 8; m_eccGroup += (*pMsg++);
     
-    nKeyLen = *pMsg++;      // Pubkey Length: 32
+    uint nKeyLen = *pMsg++;      // Pubkey Length: 32
     if ((nKeyLen & 1) && (*pMsg == 0x00)) {nKeyLen--; pMsg++;}
     err |= (nKeyLen ^ sizeof(m_eccServer));
     memcpy(m_eccServer, pMsg, sizeof(m_eccServer));
@@ -4073,7 +4057,6 @@ uint TinyTls::CreateCertContext(bool isClient, const uchar* pCert, uchar* pMsg)
 void TinyTls::NewEccKey()
 {
     uchar* pEccKey = m_bIsClient? m_eccClient : m_eccServer;
-    uchar* pMyEccKey = m_bIsClient ? m_eccClient : m_eccServer;
     for (int i = 0; i < 8; i++) ((uint*)pEccKey)[i] = gfRandom();
     pEccKey[31] &= 0x7F; // Clear high bit to make good for X25519
     pEccKey[31] |= 0x40; pEccKey[0] &= 0xF8; // RFC 7748 Sec.
@@ -4160,7 +4143,7 @@ void TinyTls::CalcMasterSecret()
 void TinyTls::ChangeCipherSpec(bool isForClient)
 {
     // Calculate key block data from Master Secret
-    int ret = 0, keyLen = 16, ivLen = 4;
+    int keyLen = 16, ivLen = 4;
 
     switch (ePendingCipher) {
     case TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256:
