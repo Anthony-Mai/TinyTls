@@ -53,6 +53,7 @@
 *
 ******************************************************************************/
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <new>
 #include <assert.h>
@@ -551,3 +552,4 @@ Curve: P256
     y = 447FE742C2BFEF4D0DB14B5B83A2682309B5618E0064A94804E9282179FE089F
 
 #endif //Test_Vectors
+

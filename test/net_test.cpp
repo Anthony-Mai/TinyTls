@@ -141,7 +141,6 @@ static unsigned int ClientCallback(void* pUserContext, TlsCBData* pCBData)
 {
     MyAppContext& appCtx(*reinterpret_cast<MyAppContext*>(pUserContext));
 
-    printf("CB %d ", pCBData->cbType);
     unsigned int ret = 0;
     switch (pCBData->cbType) {
     case TlsCBData::CB_RANDOM:
