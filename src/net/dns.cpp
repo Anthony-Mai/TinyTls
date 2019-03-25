@@ -368,6 +368,7 @@ void get_dns_servers()
             if (*((const uint32_t*)line) == *((const uint32_t*)"nameserver")) {
                 p = line + 11;
                 gDnsIp = ntohl(inet_addr(p));
+                if (gDnsIp) break; // Happy with first one we got.
             }
         }
         fclose(fp);
