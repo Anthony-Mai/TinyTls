@@ -151,11 +151,11 @@ Asn::Asn(const pu8& s) : po_(s), p0_(s), p_((pu8&)s)
 {
 }
 
-Asn::Asn(pu8& s, u8 t, size_t n) : po_(s), p_((*s++ = t, *s++ = u8((n < 0x80) ? n :
-    (n<0x100 ? (*s++ = 0x81, n) : (*s++ = (n<65536) ? 0x82 : u8(n >> 16), *s++ = u8(n >> 8), n))), s)),
-    p0_(s + 2 + (n >= 128) + (n >= 256)) {}
+Asn::Asn(pu8& s, u8 t, size_t n) : po_(s), p0_(s + 2 + (n >= 128) + (n >= 256)), p_((*s++ = t, *s++ = u8((n < 0x80)
+    ? n : (n<0x100 ? (*s++ = 0x81, n) : (*s++ = (n<65536) ? 0x82 : u8(n >> 16), *s++ = u8(n >> 8), n))), s)) {}
 
-Asn::~Asn() { if (po_ == p0_) return;  size_t n = p_ - p0_; p0_[-1] = u8(n < 256 ? n : (n < 65536 ? (p0_[-2] = u8(n >> 8), n) : (p0_[-3] = u8(n >> 16), p0_[-2] = u8(n >> 8), n))); }
+Asn::~Asn() { if (po_ == p0_) return; size_t n = p_ - p0_; p0_[-1] = u8(n);
+    if (n>65535) p0_[-3] = u8(n>>16); if (n>255) p0_[-2] = u8(n>>8); if (n>127) po_[1] = 0x7E + (p0_-po_); }
 
 ASN::Seq::Seq(pu8& s, size_t n) : Asn(s, SEQUENCE_TAG, n) {}
 ASN::Seq0::Seq0(pu8& s) : Asn0(s, SEQUENCE_TAG) {}
