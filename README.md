@@ -65,6 +65,19 @@ have not already done some. Once you have cmake, follow these steps:
 
 You may have to run the same make command a few more times, if it fails to
 build all dependencies in just one pass. Please help if you can fix this.
+
+The Linux make file will try to cross build both 32 bits and 64 bits binary.
+You may run into compile errors like this when <stdint.h> is first included:
+  /usr/include/stdint.h:26:10: fatal error: bits/libc-header-start.h: No such file or directory
+or
+  /usr/include/c++/7/new:39:10: fatal error: bits/c++config.h: No such file or directory
+
+The solution is rather easy. Just install the needed gcc multi-arch packages:
+  sudo apt-get install gcc-multilib g++-multilib
+
+Read related online discussions here on stackoverflow.com:
+  https://stackoverflow.com/questions/54082459/fatal-error-bits-libc-header-start-h-no-such-file-or-directory-while-compili
+  https://stackoverflow.com/questions/4643197/missing-include-bits-cconfig-h-when-cross-compiling-64-bit-program-on-32-bit
 ```
 
 # TinyTls Release 1.0.0 (03/24/2019)
