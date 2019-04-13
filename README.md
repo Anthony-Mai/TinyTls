@@ -78,6 +78,13 @@ The solution is rather easy. Just install the needed gcc multi-arch packages:
 Read related online discussions here on stackoverflow.com:
   https://stackoverflow.com/questions/54082459/fatal-error-bits-libc-header-start-h-no-such-file-or-directory-while-compili
   https://stackoverflow.com/questions/4643197/missing-include-bits-cconfig-h-when-cross-compiling-64-bit-program-on-32-bit
+
+Note on Raspberry Pi 3 b+: The processor on Raspberry Pi 3B+ is an ARMV7l
+processor. Unfortunately the default GCC that comes with Raspian is
+GCC-4.6 which would only produce ARMV6 xexcutables, and it cannot be
+made tp produce armv7 executables. To enjoy the full feature of ARMv7
+you must upgrade to GCC-4.8. Follow instructions here on how to do it:
+    http://www.raspberryvi.org/stories/upgrade-gcc-armv7.html
 ```
 
 # TinyTls Release 1.0.0 (03/24/2019)
