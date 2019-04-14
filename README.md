@@ -85,6 +85,30 @@ GCC-4.6 which would only produce ARMV6 xexcutables, and it cannot be
 made tp produce armv7 executables. To enjoy the full feature of ARMv7
 you must upgrade to GCC-4.8. Follow instructions here on how to do it:
     http://www.raspberryvi.org/stories/upgrade-gcc-armv7.html
+
+Similarly on Aarch64 platforms, like Nano Pi containing a Rockchip3399
+processor, the default compiler many not be able to leverage advanced
+features of armv8. Follow instructions at above web site to tweak the
+compile commands. Specifically remove these symbolic links (but before
+that make sure you note down what were the original symbolic links):
+    /usr/bin/gcc /usr/bin/g++ /usr/bin/as
+Then replace these three symbolic links with real script files that
+refer to the actual commands meant to be executed. I used these:
+
+My /usr/bin/gcc looks like this:
+#!/bin/bash
+gcc-7 $* -march=armv8-a
+
+My /usr/bin/g++ looks like this:
+#!/bin/bash
+g++-7 $* -march=armv8-a
+
+My /usr/bin/as looks like this:
+#!/bin/bash
+aarch64-linux-gnu-as $* -march=armv8-a+crypt
+
+Finally do not forget to chmod 0755 to allow them to be executed.
+
 ```
 
 # TinyTls Release 1.0.0 (03/24/2019)
