@@ -22,7 +22,26 @@ rd_clk2:
     ret
 .size	rd_clk2,.-rd_clk2
 
+// Count leading 0 bits. Usage: uint32_t lead0(uint32_t v);
+.globl  lead0
+.type   lead0,@function
+.align  16
+lead0:
+    lzcnt %rdi, %rax
+    ret
+.size   lead0,.-lead0
 
+// Count leading 0 bits. Usage: uint32_t lead0(uint64_t v);
+.globl  lead0u8
+.type   lead0u8,@function
+.align  16
+lead0u8:
+    lzcnt %rdi, %rax
+    ret
+.size   lead0u8,.-lead0u8
+
+// Polynomial product of 64 bits x 64 bits produce 128 bits.
+// Usage: uint64_t PMull8x8(uint64_t a, uint64_t b, uint64_t r[2]);
 .globl  PMull8x8
 .type   PMull8x8,@function
 .align  16
