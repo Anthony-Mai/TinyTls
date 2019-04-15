@@ -90,15 +90,15 @@ set(PROJECT_SRC_DIR "src")
 
 if("${TARGET_CPU}" STREQUAL "x86_64")
 set(PLATFORM32_SRC
-    src/${TARGET_PLATFORM32}/clock.s
+    src/${TARGET_PLATFORM32}/platform.s
     )
 
 set(PLATFORM64_SRC
-    src/${TARGET_PLATFORM64}/clock.s
+    src/${TARGET_PLATFORM64}/platform.s
     )
 else("${TARGET_CPU}" STREQUAL "x86_64")
 set(PLATFORM_SRC
-    src/${TARGET_PLATFORM}/clock.s
+    src/${TARGET_PLATFORM}/platform.s
     )
 endif("${TARGET_CPU}" STREQUAL "x86_64")
 
