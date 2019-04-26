@@ -46,9 +46,6 @@ lead0u8:
 .type   PMull8x8,@function
 .align  16
 PMull8x8:
-    sub  $0x20, %rsp
-    movups %xmm0, (%rsp)
-    movups %xmm1, 0x10(%rsp)
     movd %rdi, %xmm0
     movd %rsi, %xmm1
     pclmullqlqdq %xmm1, %xmm0
@@ -56,10 +53,39 @@ PMull8x8:
     movups %xmm0, (%rdx)
     pshufd $0x4e, %xmm0, %xmm0
     movd %xmm0, %rdx
-    movups 0x10(%rsp), %xmm1
-    movups (%rsp), %xmm0
-    add $0x20, %rsp
     emms
     ret
 .size   PMull8x8,.-PMull8x8
+
+
+// Polynomial product of 64 bits x 64 bits then reduced by 65 bits p.
+// Usage: uint64_t PMull8x8r(uint64_t a, uint64_t b, uint64_t p);
+.globl  PMull8x8r
+.type   PMull8x8r,@function
+.align  16
+PMull8x8r:
+    movd %rdi, %xmm0
+    movd %rsi, %xmm1
+    pclmullqlqdq %xmm1, %xmm0
+    movd %rdx, %xmm1
+    movd %xmm0, %rax
+    psrldq $8, %xmm0
+
+rep1:
+    pshufd $0x44, %xmm0, %xmm0
+    movd %xmm0, %rdx
+    psrldq $8, %xmm0
+    or %rdx, %rdx
+    jz done1
+
+    pclmullqlqdq %xmm1, %xmm0
+    movd %xmm0, %rdx
+    psrldq $8, %xmm0
+    xor %rdx, %rax
+    jmp rep1
+
+done1:
+    emms
+    ret
+.size   PMull8x8r,.-PMull8x8r
 
