@@ -89,3 +89,37 @@ done1:
     ret
 .size   PMull8x8r,.-PMull8x8r
 
+// Polynomial product of 128 x 128 bits producing 256 bits result.
+// Usage: uint128 PMull16x16(uint128 a, uint128 b, uint128 r[2]);
+.globl  PMull16x16
+.type   PMull16x16,@function
+.align  16
+PMull16x16:
+    movd   %rsi, %xmm0
+    movd   %rcx, %xmm2
+    pclmullqlqdq %xmm2,%xmm0
+    movups %xmm0,0x10(%r8)
+    movd   %rdi, %xmm0
+    movd   %rdx, %xmm2
+    pclmullqlqdq %xmm2,%xmm0
+    movups %xmm0,(%r8)
+    xor    %rsi, %rdi
+    xor    %rcx, %rdx
+    movd   %rdi, %xmm1
+    movd   %rdx, %xmm2
+    pclmullqlqdq %xmm2, %xmm1
+    movups 0x10(%r8), %xmm2
+    pxor   %xmm0, %xmm1
+    movups 0x8(%r8), %xmm0
+    pxor   %xmm2, %xmm1
+    pxor   %xmm1, %xmm0
+    movups %xmm0, 0x8(%r8)
+    movups (%r8), %xmm0
+    movd   %xmm0, %rax
+    pshufd $0x4e, %xmm0, %xmm0
+    movd   %xmm0, %rdx
+    pshufd $0x4e, %xmm0, %xmm0
+    emms
+    ret
+.size   PMull16x16,.-PMull16x16
+
