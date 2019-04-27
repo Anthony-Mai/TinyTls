@@ -138,6 +138,6 @@ PMull16x16:
     mov    0x4(%esp),%eax
     movups %xmm0,(%eax)
     emms
-    ret
+    ret    $4
 .size   PMull16x16,.-PMull16x16
 
