@@ -7,25 +7,18 @@ rd_clk:
     bx      lr
 .size   rd_clk,.-rd_clk
 
-.globl	rd_clk2
-.align	16
-rd_clk2:
-    mrrc    15, 1, r0, r1, cr14
-    bx      lr
-.size	rd_clk2,.-rd_clk2
-
-// Count leading 0 bits. Usage: uint32_t lead0(uint32_t v);
-.globl  lead0
+// Count leading 0 bits. Usage: uint32_t leadz32(uint32_t v);
+.globl  leadz32
 .align  16
-lead0:
+leadz32:
     clz     r0, r0
     bx      lr
-.size   lead0,.-lead0
+.size   leadz32,.-leadz32
 
-// Count leading 0 bits. Usage: uint32_t lead0(uint64_t v);
-.globl  lead0u8
+// Count leading 0 bits. Usage: uint32_t leadz64(uint64_t v);
+.globl  leadz64
 .align  16
-lead0u8:
+leadz64:
     clz     r1, r1
     cmp     r1, #0x20
     beq     isb32
@@ -37,7 +30,7 @@ isb32:
     add     r0, r1
     eor     r1, r1
     bx      lr
-.size   lead0u8,.-lead0u8
+.size   leadz64,.-leadz64
 
 .globl  armv7_neon_probe
 .align  16

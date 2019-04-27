@@ -7,30 +7,23 @@ rd_clk:
     ret
 .size   rd_clk,.-rd_clk
 
-.globl	rd_clk2
-.type	rd_clk2,@function
-.align	16
-rd_clk2:
-    ret
-.size	rd_clk2,.-rd_clk2
-
-// Count leading 0 bits. Usage: uint32_t lead0(uint32_t v);
-.globl  lead0
-.type   lead0,@function
+// Count leading 0 bits. Usage: uint32_t leadz32(uint32_t v);
+.globl  leadz32
+.type   leadz32,@function
 .align  16
-lead0:
+leadz32:
     clz     x0, x0
     ret
-.size   lead0,.-lead0
+.size   leadz32,.-leadz32
 
-// Count leading 0 bits. Usage: uint32_t lead0(uint64_t v);
-.globl  lead0u8
-.type   lead0u8,@function
+// Count leading 0 bits. Usage: uint32_t leadz64(uint64_t v);
+.globl  leadz64
+.type   leadz64,@function
 .align  16
-lead0u8:
+leadz64:
     clz     x0, x0
     ret
-.size   lead0u8,.-lead0u8
+.size   leadz64,.-leadz64
 
 .globl  armv7_neon_probe
 .align  16
