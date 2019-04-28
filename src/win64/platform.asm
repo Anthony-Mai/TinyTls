@@ -148,7 +148,7 @@ rep001:
   por    xmm0, xmm2
 
   pclmullqlqdq xmm1, xmm0
-  por xmm1, xmm3
+  pxor xmm1, xmm3
   movd rax, xmm1
   mov [rdx], rax
   psrldq xmm1, 8
@@ -158,7 +158,7 @@ rep001:
 
   movups xmm2, xmm0
   pclmulhqlqdq xmm2, xmm2
-  por xmm1, xmm2
+  pxor xmm1, xmm2
   movd rax, xmm1
   mov [rdx], rax
   psrldq xmm1, 8

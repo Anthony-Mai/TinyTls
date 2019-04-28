@@ -166,7 +166,7 @@ rep_1:
   por    xmm0, xmm2
 
   pclmullqlqdq xmm1, xmm0
-  por xmm1, xmm3
+  pxor xmm1, xmm3
   movd eax, xmm1
   mov [edx], eax
   psrldq xmm1, 4
@@ -180,7 +180,7 @@ rep_1:
 
   movups xmm2, xmm0
   pclmulhqlqdq xmm2, xmm2
-  por xmm1, xmm2
+  pxor xmm1, xmm2
   movd eax, xmm1
   mov [edx], eax
   psrldq xmm1, 4

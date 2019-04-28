@@ -149,7 +149,7 @@ rep_1:
     por    %xmm2,%xmm0
 
     pclmullqlqdq %xmm0,%xmm1
-    por    %xmm3,%xmm1
+    pxor   %xmm3,%xmm1
     movd   %xmm1,%rax
     mov    %rax, (%rdx)
     psrldq $8,   %xmm1
@@ -159,7 +159,7 @@ rep_1:
 
     movups %xmm0,%xmm2
     pclmulhqlqdq %xmm2,%xmm2
-    por    %xmm2,%xmm1
+    pxor   %xmm2,%xmm1
     movd   %xmm1,%rax
     mov    %rax, (%rdx)
     psrldq $8,   %xmm1
