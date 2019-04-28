@@ -45,7 +45,6 @@ PMull8x8:
     ret
 .size   PMull8x8,.-PMull8x8
 
-
 // Polynomial product of 64 bits x 64 bits then reduced by 65 bits p.
 // Usage: uint64_t PMull8x8r(uint64_t a, uint64_t b, uint64_t p);
 .globl  PMull8x8r
@@ -76,6 +75,52 @@ done1:
     emms
     ret
 .size   PMull8x8r,.-PMull8x8r
+
+// Usage: void PMull64s(uint64_t* pData, uint32_t n, uint64_t p)
+.globl  PMull64s
+.type   PMull64s,@function
+PMull64s:
+    movd   %rdx, %xmm0
+    mov    %rdi, %rdx
+    mov    %rsi, %rcx
+
+rep_1:
+    movups (%rdx),%xmm1
+    movups %xmm1,%xmm2
+    pshufd $0x4E,%xmm0,%xmm0
+    psrldq $8,   %xmm2
+    pshufd $0x4E,%xmm2,%xmm2
+    psrldq $8, %xmm0
+    por    %xmm2,%xmm0
+
+    pclmullqlqdq %xmm0,%xmm1
+    por    %xmm3,%xmm1
+    movd   %xmm1,%rax
+    mov    %rax, (%rdx)
+    psrldq $8,   %xmm1
+    add    $8,   %rdx
+    dec    %rcx
+    jz     rep_done
+
+    movups %xmm0,%xmm2
+    pclmulhqlqdq %xmm2,%xmm2
+    por    %xmm2,%xmm1
+    movd   %xmm1,%rax
+    mov    %rax, (%rdx)
+    psrldq $8,   %xmm1
+    movups %xmm1,%xmm3
+    add    $8,   %rdx
+    loop   rep_1
+
+rep_done:
+    movd   %xmm1,%rax
+    mov    %rax,(%rdx)
+    psrldq $8,   %xmm1
+    add    $8,   %rdx
+
+    emms
+    ret
+.size   PMull64s,.-PMull64s
 
 // Polynomial product of 128 x 128 bits for 256 bits.
 // Usage: u128 PMull16x16(u128 a, u128 b, u128 r[2]);
