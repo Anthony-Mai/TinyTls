@@ -1,6 +1,7 @@
 #ifndef PLATFORM_H_INCLUDED
 #define PLATFORM_H_INCLUDED
 
+struct AesText;
 
 union u64 {
     struct { uint32_t lo, hi; } v32;
@@ -8,13 +9,23 @@ union u64 {
 };
 
 union u128 {
-    struct { uint64_t lo, hi; } v64;
-    uint32_t v32[4];
+    uint64_t d[2];
+    uint32_t w[4];
+    uint8_t b[16];
 
-    u128& operator += (const u128& s) { v64.lo ^= s.v64.lo; v64.hi ^= s.v64.hi; return *this; }
-    u128& operator ^= (const u128& s) { v64.lo ^= s.v64.lo; v64.hi ^= s.v64.hi; return *this; }
-    bool operator == (const u128& s) { return ((v64.lo == s.v64.lo) && (v64.hi == s.v64.hi)); }
-    operator bool () { return ((v64.lo != 0llu) || (v64.hi != 0llu)); }
+    void netIn(const uint8_t s[16]);
+    void netOut(uint8_t s[16]);
+    u128& shiftR() {
+        uint8_t c(0xE1 & (0x00 - (b[0] & 0x01)));
+        d[0] = (d[1] << 63) | (d[0] >> 1); d[1] >>= 1;
+        b[15] ^= c; return *this; }
+
+    u128& operator += (const u128& s) { d[0] ^= s.d[0]; d[1] ^= s.d[1]; return *this; }
+    u128& operator ^= (const u128& s) { d[0] ^= s.d[0]; d[1] ^= s.d[1]; return *this; }
+    bool operator == (const u128& s) { return ((d[0] == s.d[0]) && (d[1] == s.d[1])); }
+    operator bool () { return ((d[0] != 0llu) || (d[1] != 0llu)); }
+    void pmult(AesText& x) const;
+    u128& bitReverse();
 };
 
 #ifdef __cplusplus

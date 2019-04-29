@@ -4,27 +4,14 @@
 
 #include <stdint.h>
 
+#include "platform.h"
+
 struct AesText;
 union AesCtx;
 
 union u32 {
     uint32_t v;
     uint8_t b[4];
-};
-
-union u128 {
-    uint64_t d[2];
-    uint32_t w[4];
-    uint8_t b[16];
-
-    void netIn(const uint8_t s[16]);
-    void netOut(uint8_t s[16]);
-    u128& shiftR() {
-        uint8_t c(0xE1 & (0x00 - (b[0] & 0x01)));
-        d[0] = (d[1] << 63) | (d[0] >> 1); d[1] >>= 1;
-        b[15] ^= c; return *this; }
-    u128& operator ^= (const u128& s) { d[0] ^= s.d[0]; d[1] ^= s.d[1]; return *this; }
-    void pmult(AesText& x) const;
 };
 
 struct HKey
