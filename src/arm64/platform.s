@@ -288,3 +288,62 @@ rep_2:
     ret
 .size PMull16x16r,.-PMull16x16r
 
+// Usage: void PMull128s(u128* pData, uint32_t n, u128 p)
+.globl  PMull128s
+.type   PMull128s,@function
+PMull128s:
+    eor     v0.16b, v0.16b, v0.16b
+    eor     v1.16b, v1.16b, v1.16b
+    eor     v2.16b, v2.16b, v2.16b
+    mov     v2.d[1], x3
+    mov     v2.d[0], x2
+    eor     x2, x2, x2
+    eor     x3, x3, x3
+
+rep3:
+    ldr     x4, [x0]
+    mov     v0.d[0], x4
+    mov     v1.d[0], x4
+    pmull   v0.1q, v0.1d, v2.1d
+    mov     x4, v0.d[0]
+    eor     x2, x2, x4
+    str     x2, [x0]
+    mov     x2, v0.d[1]
+    add     x0, x0, 8
+    eor     x2, x2, x3
+
+    mov     v0.d[0], v2.d[1]
+    pmull   v0.1q, v0.1d, v1.1d
+
+    ldr     x4, [x0]
+    mov     v1.d[0], x4
+    pmull   v1.1q, v1.1d, v2.1d
+    eor     v0.16b, v0.16b, v1.16b
+    mov     x3, v0.d[0]
+    eor     x2, x2, x3
+    str     x2, [x0]
+    mov     x2, v0.d[1]
+    add     x0, x0, 8
+
+    mov     v0.d[0], v2.d[1]
+    mov     v1.d[0], x4
+    pmull   v0.1q, v0.1d, v1.1d
+    mov     x3, v0.d[0]
+    eor     x2, x2, x3
+    mov     x3, v0.d[1]
+
+    subs    x1, x1, 1
+    bne     rep3
+
+    orr     x4, x2, x3
+    ands    x4, x4, x4
+    beq     done3
+    eor     x4, x4, x4
+
+    str     x2, [x0]
+    str     x3, [x0,8]
+
+done3:
+    ret
+.size PMull128s,.-PMull128s
+
