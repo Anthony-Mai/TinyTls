@@ -72,23 +72,23 @@ _rd_clk ENDP
 ; Usage: uint32_t leadz32(uint32_t v);
 PUBLIC _leadz32
 _leadz32 PROC
-  mov   eax, [esp+4]
-  lzcnt eax, eax
+  mov    eax, [esp+4]
+  lzcnt  eax, eax
   ret
 _leadz32 ENDP
 
 ; Usage: uint32_t leadz64(uint64_t v)
 PUBLIC _leadz64
 _leadz64 PROC
-  mov   eax, [esp+8]
-  or    eax, eax
-  jz    ld2
-  lzcnt eax, eax
+  mov    eax, [esp+8]
+  or     eax, eax
+  jz     ld2
+  lzcnt  eax, eax
   ret
 ld2:
-  mov   eax, [esp+4]
-  lzcnt eax, eax
-  add   eax, 32
+  mov    eax, [esp+4]
+  lzcnt  eax, eax
+  add    eax, 32
   ret
 _leadz64 ENDP
 
@@ -97,35 +97,35 @@ PUBLIC _PMull8x8r
 _PMull8x8r PROC
   movups xmm0, [esp+4]
   movups xmm1, [esp+12]
-  push ecx
-  push ebx
+  push   ecx
+  push   ebx
   pclmulhqlqdq xmm0, xmm0
   psrldq xmm1, 8
-  movd eax, xmm0
+  movd   eax, xmm0
   psrldq xmm0, 4
-  movd edx, xmm0
+  movd   edx, xmm0
   psrldq xmm0, 4
 
 rep1:
   pshufd xmm0, xmm0, 44h
-  movd ebx, xmm0
+  movd   ebx, xmm0
   psrldq xmm0, 4
-  movd ecx, xmm0
+  movd   ecx, xmm0
   psrldq xmm0, 4
-  or  ebx, ecx
-  jz  done1
+  or     ebx, ecx
+  jz     done1
   pclmullqlqdq xmm0, xmm1
-  movd ebx, xmm0
+  movd   ebx, xmm0
   psrldq xmm0, 4
-  xor  eax, ebx
-  movd ecx, xmm0
+  xor    eax, ebx
+  movd   ecx, xmm0
   psrldq xmm0, 4
-  xor  edx, ecx
-  jmp short rep1
+  xor    edx, ecx
+  jmp    short rep1
 
 done1:
-  pop  ebx
-  pop  ecx
+  pop    ebx
+  pop    ecx
   emms
   ret
 _PMull8x8r ENDP
@@ -135,11 +135,11 @@ PUBLIC _PMull8x8
 _PMull8x8 PROC
   movups xmm0, [esp+4]
   pclmulhqlqdq xmm0, xmm0
-  mov  edx, [esp+20]
-  movd eax, xmm0
+  mov    edx, [esp+20]
+  movd   eax, xmm0
   movups [edx], xmm0
   psrldq xmm0, 4
-  movd edx, xmm0
+  movd   edx, xmm0
   emms
   ret
 _PMull8x8 ENDP
@@ -150,11 +150,11 @@ _PMull64s PROC
   push   ebp
   mov    ebp, esp
   movups xmm0, [ebp+8]
-  movd edx, xmm0
+  movd   edx, xmm0
   psrldq xmm0, 4
-  movd ecx, xmm0
+  movd   ecx, xmm0
   psrldq xmm0, 4
-  pxor xmm3, xmm3
+  pxor   xmm3, xmm3
 
 rep_1:
   movups xmm1, [edx]
@@ -166,38 +166,38 @@ rep_1:
   por    xmm0, xmm2
 
   pclmullqlqdq xmm1, xmm0
-  pxor xmm1, xmm3
-  movd eax, xmm1
-  mov [edx], eax
+  pxor   xmm1, xmm3
+  movd   eax, xmm1
+  mov    [edx], eax
   psrldq xmm1, 4
-  movd eax, xmm1
-  mov [edx+4], eax
+  movd   eax, xmm1
+  mov    [edx+4], eax
   psrldq xmm1, 4
 
-  add edx, 8
-  dec ecx
-  jz  rep_done
+  add    edx, 8
+  dec    ecx
+  jz     rep_done
 
   movups xmm2, xmm0
   pclmulhqlqdq xmm2, xmm2
-  pxor xmm1, xmm2
-  movd eax, xmm1
-  mov [edx], eax
+  pxor   xmm1, xmm2
+  movd   eax, xmm1
+  mov    [edx], eax
   psrldq xmm1, 4
-  movd eax, xmm1
-  mov [edx+4], eax
+  movd   eax, xmm1
+  mov    [edx+4], eax
   psrldq xmm1, 4
   movups xmm3, xmm1
 
-  add  edx, 8
-  loop rep_1
+  add    edx, 8
+  loop   rep_1
 
 rep_done:
-  movd eax, xmm1
-  mov [edx], eax
+  movd   eax, xmm1
+  mov    [edx], eax
   psrldq xmm1, 4
-  movd eax, xmm1
-  mov [edx+4], eax
+  movd   eax, xmm1
+  mov    [edx+4], eax
   psrldq xmm1, 4
 
   emms
@@ -208,8 +208,8 @@ _PMull64s ENDP
 ; Usage: u128 PMull16x16(u128 a, u128 b, u128 r[2]);
 PUBLIC _PMull16x16
 _PMull16x16 PROC
-  push ebp
-  mov ebp, esp
+  push   ebp
+  mov    ebp, esp
 
   movups xmm1, [ebp+12] ; Parameter a
   movups xmm2, [ebp+28] ; Parameter b
@@ -220,40 +220,40 @@ _PMull16x16 PROC
   movdqa xmm0, xmm1
   pclmullqlqdq xmm0, xmm2
   movdqa xmm4, xmm0
-  movq xmm0, xmm1
+  movq   xmm0, xmm1
   psrldq xmm1, 8
-  pxor xmm1, xmm0
-  movq xmm0, xmm2
+  pxor   xmm1, xmm0
+  movq   xmm0, xmm2
   psrldq xmm2, 8
-  pxor xmm2, xmm0
+  pxor   xmm2, xmm0
   pclmullqlqdq xmm1, xmm2
-  pxor xmm1, xmm4
-  pxor xmm1, xmm3
-  mov eax, [ebp+44]
+  pxor   xmm1, xmm4
+  pxor   xmm1, xmm3
+  mov    eax, [ebp+44]
   movdqa xmm0, xmm1
   pslldq xmm1, 8
-  pxor xmm4, xmm1
+  pxor   xmm4, xmm1
   movups [eax], xmm4
   psrldq xmm0, 8
-  pxor xmm3, xmm0
+  pxor   xmm3, xmm0
   movups [eax+16], xmm3
 
-  mov eax, [ebp+8]
+  mov    eax, [ebp+8]
   movups [eax], xmm4
 
   emms
-  pop ebp
+  pop    ebp
   ret
 _PMull16x16 ENDP
 
 ; Usage: u128 PMull16x16r(u128 a, u128 b, u128* p);
 PUBLIC _PMull16x16r
 _PMull16x16r PROC
-  push ebp
-  mov ebp, esp
+  push   ebp
+  mov    ebp, esp
 
-  pxor xmm0, xmm0
-  mov eax, [ebp+8]
+  pxor   xmm0, xmm0
+  mov    eax, [ebp+8]
   movups [eax], xmm0
 
   movups xmm1, [ebp+12] ; Parameter a
@@ -266,43 +266,190 @@ rep_2:
   movdqa xmm0, xmm1
   pclmullqlqdq xmm0, xmm2
   movdqa xmm4, xmm0
-  movq xmm0, xmm1
+  movq   xmm0, xmm1
   psrldq xmm1, 8
-  pxor xmm1, xmm0
-  movq xmm0, xmm2
+  pxor   xmm1, xmm0
+  movq   xmm0, xmm2
   psrldq xmm2, 8
-  pxor xmm2, xmm0
+  pxor   xmm2, xmm0
   pclmullqlqdq xmm1, xmm2
-  pxor xmm1, xmm4
-  pxor xmm1, xmm3
+  pxor   xmm1, xmm4
+  pxor   xmm1, xmm3
   movdqa xmm0, xmm1
   pslldq xmm1, 8
-  pxor xmm4, xmm1
+  pxor   xmm4, xmm1
   psrldq xmm0, 8
-  pxor xmm3, xmm0
+  pxor   xmm3, xmm0
 
-  mov eax, [ebp+8]
+  mov    eax, [ebp+8]
   movups xmm0, [eax]
-  pxor xmm4, xmm0
+  pxor   xmm4, xmm0
   movups [eax], xmm4
 
   movdqa xmm1, xmm3
   pshufd xmm0, xmm3, 4eh
-  mov eax, [ebp+44] ;; Parameter p
-  por xmm0, xmm3
+  mov    eax, [ebp+44] ;; Parameter p
+  por    xmm0, xmm3
   movups xmm2, [eax]
   movdqa xmm3, xmm0
   pshufd xmm0, xmm0, 0b1h
-  por xmm0, xmm3
-  movd eax, xmm0
-  or eax, eax
-  jnz rep_2
+  por    xmm0, xmm3
+  movd   eax, xmm0
+  or     eax, eax
+  jnz    rep_2
 
-  mov eax, [ebp+8]
+  mov    eax, [ebp+8]
   emms
-  pop ebp
+  pop    ebp
   ret
 _PMull16x16r ENDP
 
+; Usage: void PMull128s(u128* pData, uint32 n, u128 p)
+PUBLIC _PMull128s
+_PMull128s PROC
+  push   ebp
+  mov    ebp, esp
+  mov    edx, [ebp+8]
+  mov    ecx, [ebp+12]
+  movups xmm2, [ebp+16]
+  pxor   xmm3, xmm3
+
+rep_3:
+  movups xmm0, [edx]
+  movups xmm1, xmm0
+  pclmullqlqdq xmm0, xmm2
+  pxor   xmm3, xmm0
+  movups xmm0, xmm1
+
+  movd   eax, xmm3
+  psrldq xmm3, 4
+  mov    [edx], eax
+  movd   eax, xmm3
+  psrldq xmm3, 4
+  mov    [edx+4], eax
+  add    edx, 8
+
+  pclmullqhqdq xmm0, xmm2
+  pxor   xmm3, xmm0
+  movups xmm0, xmm1
+  pclmulhqlqdq xmm0, xmm2
+  pxor   xmm3, xmm0
+
+  movd   eax, xmm3
+  psrldq xmm3, 4
+  mov    [edx], eax
+  movd   eax, xmm3
+  psrldq xmm3, 4
+  mov    [edx+4], eax
+  add    edx, 8
+
+  pclmulhqhqdq xmm1, xmm2
+  pxor   xmm3, xmm1
+
+  loop   rep_3
+
+rep3_done:
+  movups [edx], xmm3
+  add    edx, 16
+
+  emms
+  pop    ebp
+  ret
+_PMull128s ENDP
+
+; Usage: u128 PShl128c(u128 data, uint32_t n)
+PUBLIC _PShl128c
+_PShl128c PROC
+  push   ebp
+  mov    ebp, esp
+  push   ecx
+  push   ebx
+
+  movups xmm0, [ebp+12]
+  mov    ecx, [ebp+28]
+  mov    edx, [ebp+8]
+  xor    ebx, ebx
+
+  movd   eax, xmm0
+  shld   eax, ebx, cl
+  movd   ebx, xmm0
+  mov    [edx], eax
+  pshufd xmm0, xmm0, 39h ; Rotate all bytes to right one byte.
+
+  movd   eax, xmm0
+  shld   eax, ebx, cl
+  movd   ebx, xmm0
+  mov    [edx+4], eax
+  pshufd xmm0, xmm0, 39h
+
+  movd   eax, xmm0
+  shld   eax, ebx, cl
+  movd   ebx, xmm0
+  mov    [edx+8], eax
+  pshufd xmm0, xmm0, 39h
+
+  movd   eax, xmm0
+  shld   eax, ebx, cl
+  movd   ebx, xmm0
+  mov    [edx+12], eax
+  pshufd xmm0, xmm0, 39h
+
+  mov    eax, edx
+  xor    edx, edx
+  emms
+  pop    ebx
+  pop    ecx
+  pop    ebp
+  ret
+_PShl128c ENDP
+
+; Usage: u128* PShl128r(u128* pData, uint32_t n)
+PUBLIC _PShl128r
+_PShl128r PROC
+  push   ebp
+  mov    ebp, esp
+  push   ecx
+  push   ebx
+  push   edx
+
+  mov    eax, [ebp+8]
+  movups xmm0, [eax]
+  mov    ecx, [ebp+12]
+  mov    edx, eax
+
+  movd   eax, xmm0
+  shld   eax, ebx, cl
+  movd   ebx, xmm0
+  mov    [edx], eax
+  pshufd xmm0, xmm0, 39h
+
+  movd   eax, xmm0
+  shld   eax, ebx, cl
+  movd   ebx, xmm0
+  mov    [edx+4], eax
+  pshufd xmm0, xmm0, 39h
+
+  movd   eax, xmm0
+  shld   eax, ebx, cl
+  movd   ebx, xmm0
+  mov    [edx+8], eax
+  pshufd xmm0, xmm0, 39h
+
+  movd   eax, xmm0
+  shld   eax, ebx, cl
+  movd   ebx, xmm0
+  mov    [edx+12], eax
+  pshufd xmm0, xmm0, 39h
+
+  mov    eax, edx
+  emms
+  pop    edx
+  pop    ebx
+  pop    ecx
+  pop    ebp
+  ret
+_PShl128r ENDP
+
 _TEXT ENDS
 END
+
