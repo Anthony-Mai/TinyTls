@@ -370,6 +370,14 @@ _PShl128c PROC
   mov    edx, [ebp+8]
   xor    ebx, ebx
 
+sh_0:
+  cmp    cx, 32
+  jb     sh_1
+  pslldq xmm0, 4
+  sub    cx, 32
+  jmp    short sh_0
+
+sh_1:
   movd   eax, xmm0
   shld   eax, ebx, cl
   movd   ebx, xmm0
@@ -417,6 +425,14 @@ _PShl128r PROC
   mov    ecx, [ebp+12]
   mov    edx, eax
 
+sh_2:
+  cmp    cx, 32
+  jb     sh_3
+  pslldq xmm0, 4
+  sub    cx, 32
+  jmp    short sh_2
+
+sh_3:
   movd   eax, xmm0
   shld   eax, ebx, cl
   movd   ebx, xmm0

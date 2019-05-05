@@ -336,6 +336,15 @@ PShl128c PROC
   mov    rax, [rdx]
   mov    rdx, [rdx+8]
 
+sh_0:
+  cmp    cx, 64
+  jb     sh_1
+  mov    rdx, rax
+  xor    rax, rax
+  sub    cx, 64
+  jmp    short sh_0
+
+sh_1:
   shld   rdx, rax, cl
   shl    rax, cl
 
@@ -363,6 +372,15 @@ PShl128r PROC
   mov    rax, [rdx]
   mov    rbx, [rdx+8]
 
+sh_2:
+  cmp    cx, 64
+  jb     sh_3
+  mov    rbx, rax
+  xor    rax, rax
+  sub    cx, 64
+  jmp    short sh_2
+
+sh_3:
   shld   rbx, rax, cl
   shl    rax, cl
 

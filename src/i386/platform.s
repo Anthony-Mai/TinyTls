@@ -387,6 +387,14 @@ PShl128c:
   mov    0x8(%ebp), %edx
   xor    %ebx, %ebx
 
+sh_0:
+  cmp    $32,  %cx
+  jb     sh_1
+  pslldq $4,   %xmm0
+  sub    $32,  %cx
+  jmp    sh_0
+
+sh_1:
   movd   %xmm0,%eax
   shld   %cl,  %ebx, %eax
   movd   %xmm0,%ebx
@@ -435,6 +443,14 @@ PShl128r:
   movups (%edx),%xmm0
   mov    0xC(%ebp), %ecx
 
+sh_2:
+  cmp    $32,  %cx
+  jb     sh_3
+  pslldq $4,   %xmm0
+  sub    $32,  %cx
+  jmp    sh_2
+
+sh_3:
   movd   %xmm0,%eax
   shld   %cl,  %ebx, %eax
   movd   %xmm0,%ebx

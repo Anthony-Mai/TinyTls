@@ -337,6 +337,15 @@ PShl128c:
   mov    %rsi, %rdx
   mov    %rdi, %rax
 
+sh_0:
+  cmp    $64,  %cx
+  jb     sh_1
+  mov    %rax, %rdx
+  xor    %rax, %rax
+  sub    $64,  %cx
+  jmp    sh_0
+
+sh_1:
   shld   %cl,  %rax, %rdx
   shl    %cl,  %rax
 
@@ -353,8 +362,18 @@ PShl128r:
   mov    %rsi, %rcx
   mov    (%rdi), %rax
   mov    8(%rdi), %rsi
-  shld   %cl, %rax, %rsi
-  shl    %cl, %rax
+
+sh_2:
+  cmp    $64,  %cx
+  jb     sh_3
+  mov    %rax, %rsi
+  xor    %rax, %rax
+  sub    $64,  %cx
+  jmp    sh_2
+
+sh_3:
+  shld   %cl,  %rax, %rsi
+  shl    %cl,  %rax
   mov    %rsi, 8(%rdi)
   mov    %rax, (%rdi)
 
