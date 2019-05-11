@@ -59,6 +59,8 @@
 .type   rd_clk,@function
 .align  16
 rd_clk:
+    isb
+    mrs     x0, cntvct_el0
     ret
 .size   rd_clk,.-rd_clk
 
