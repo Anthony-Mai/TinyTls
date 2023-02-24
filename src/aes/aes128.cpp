@@ -159,7 +159,7 @@ HKey::HKey(const AesText& key) {
         for (i = 1; i < j; i++) {
             (p[br[j + i]] = p[br[j]]) ^= p[br[i]];
         }
-        (p[br[j + j]] = p[br[j]]).shiftR();
+        if (j+j<16) (p[br[j + j]] = p[br[j]]).shiftR();
     }
     for ( ; j < 512; j++) {
         for (i = 0; i < 16; i++) {
