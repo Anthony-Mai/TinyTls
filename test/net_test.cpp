@@ -282,11 +282,15 @@ static unsigned int ServerCallback(void* pUserContext, TlsCBData* pCBData)
 
 void* NetClientThread(void* pParam)
 {
-#define SERVER_NAME "www.cloudflare.com"
+#define SERVER_NAME "www.google.com" // This works as of 06/20/2023
+//#define SERVER_NAME "www.cnn.com" // This does not appear to be working
+//#define SERVER_NAME "www.cloudflare.com" // This works as of 06/20/2023
     static const char httpRequestMsg[] =
         "GET / HTTP/1.1\r\n"
         "User-Agent: TinyTls\r\n"
-        "Host: cloudflare.com\r\n"
+        //"Host: www.google.com\r\n"
+        //"Host: www.cnn.com\r\n"
+        //"Host: cloudflare.com\r\n"
         "\r\n";
 
     uint ip = 0, it = 0;
@@ -463,10 +467,11 @@ int do_clientTest()
 int do_serverTest()
 {
     int r = 0; //do_socketTest();
-    r |= do_clientTest();
+    //r |= do_clientTest(); // If we want, do another client test here.
     //r |= do_connectTest();
 
-    // Start a server thread
+    printf("Now start a TLS server thread for test\n");
+
     pthread_t threadId = 0;
     uint nThreadDone = 0;
     if (pthread_create(&threadId, nullptr, NetServerThread, &nThreadDone)) {
@@ -540,12 +545,13 @@ int do_socketTest()
 
 int do_connectTest()
 {
-    uint ip = getIp("www.cnn.com");
-    printf("IP is %08X\n", ip);
+    static const char* domainToConnect = "www.google.com";
+    uint ip = getIp(domainToConnect);
+    printf("IP of %s is %08X\n", domainToConnect, ip);
 
     TcpSockLinux mySock(ip, 443);
 
-    printf("Successfully connected\n");
+    printf("Successfully connected to %s\n", domainToConnect);
     return 0;
 }
 

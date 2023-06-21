@@ -92,15 +92,17 @@ const CIPHERSET* gpCipherSet = nullptr;
 
 int dnsTest()
 {
+    static const char* TestDomainName = "www.cnn.com";
     uint32_t ip = 0;
-    ip = getIp("www.cnn.com");
+    ip = getIp(TestDomainName);
     in_addr in;
 #if defined(WIN32) || defined(WIN64)
     in.S_un.S_addr = htonl(ip);
 #else //defined(WIN32) || defined(WIN64)
     in.s_addr = htonl(ip);
 #endif //defined(WIN32) || defined(WIN64)
-    printf("IP obtained is %s\n", inet_ntoa(in));
+    printf("IP obtained for %s is %s\n", TestDomainName, inet_ntoa(in));
+    printf("dnsTest() done\n");
     return ip;
 }
 
@@ -111,6 +113,7 @@ int main(int argc, char* argv[])
 
     gpCipherSet = pCipherSet;
 
+    printf("Call dnsTest() next\n");
     dnsTest();
 
     StartCerts(malloc, free, pCipherSet);
@@ -122,9 +125,13 @@ int main(int argc, char* argv[])
 
     ret |= aes_test();
 
+    printf("Call rfc8448_test() next\n");
     ret |= rfc8448_test(*pCipherSet);
 
+    printf("Call do_clientTest() in test/net_test.cpp next\n");
     ret |= do_clientTest();
+
+    printf("Call do_serverTest() in test/net_test.cpp next\n");
     ret |= do_serverTest();
 
     printf("All test %s\n", (ret==0)? "OK" : "Not OK");
