@@ -165,7 +165,11 @@ void Chacha20::Block(ChachaBlock& b)
     state_[12] ++;
 }
 
-Poly1305::Poly1305(const Chacha20& cha) : cc_{0,0,0,0,0}
+Poly1305::Poly1305(
+    const Chacha20& cha
+) : cc_{0,0,0,0,0},
+    ac_{0,0,0,0,0},
+    off_(0), cnt_(0)
 {
     Chacha20 cc(cha);
     for (int i = 0; i < 10; i++) cc.InnerRound();
@@ -189,63 +193,68 @@ union u64 {
 };
 
 // If needed, message is padded with 0 bytes to make exact 16 byte blocks
-void Poly1305::add(const uint8_t* pMsg, size_t cbBytes)
-{
+void Poly1305::add(const uint8_t* pMsg, size_t cbBytes) {
     size_t i, j;
-    uint32_t acc[5];
-    uint32_t mm[8];
     while (cbBytes) {
-        for (i = 0; i < 16; ) {
-            ((uint8_t*)acc)[i++] = *pMsg++;
+        for ( ; off_ < 16; ) {
+            ((uint8_t*)ac_)[off_++] = *pMsg++;
             if (--cbBytes <= 0) {
-                // Pad 0 bytes to a full block
-                for (; i < 16; ) ((uint8_t*)acc)[i++] = 0x00;
                 break;
             }
         }
-        ((uint8_t*)acc)[i++] = 0x01;
-        while (i < 20) ((uint8_t*)acc)[i++] = 0x00;
-        mm[7] = mm[6] = mm[5] = mm[4] = 0; mm[3] = mm[2] = mm[1] = mm[0] = 0;
-        for (i = 0; (j = i) <= 4; i++) {
-            if ((cc_[i] += acc[i]) < acc[i]) {
-                if (++cc_[i + 1] == 0) if (++cc_[i + 2] == 0) if (++cc_[i + 3] == 0) ++cc_[i + 4];
-            }
-            for (j = 0; j < 4; j++) {
-                u64 u{ uint64_t(cc_[i]) * r_[j] };
-                u.u[1] += ((mm[i + j] += u.u[0]) < u.u[0]);
-                if ((mm[i + j + 1] += u.u[1]) < u.u[1]) ++mm[i + j + 2];
-            }
-        }
-        // Reduction by modulo (2^130 - 5)
-        acc[0] = mm[4] & 0xFFFFFFFC; mm[4] &= 3;
-        acc[1] = mm[5]; mm[5] = 0;
-        acc[2] = mm[6]; mm[6] = 0;
-        acc[3] = mm[7]; mm[7] = 0;
-        acc[4] = 0;
-        if ((mm[0] += acc[0]) < acc[0]) if (++mm[1] == 0) if (++mm[2] == 0) if (++mm[3] == 0) ++mm[4];
-        acc[0] = (acc[0] >> 2) | (acc[1] << 30);
-        if ((mm[0] += acc[0]) < acc[0]) if (++mm[1] == 0) if (++mm[2] == 0) if (++mm[3] == 0) ++mm[4];
-        if ((mm[1] += acc[1]) < acc[1]) if (++mm[2] == 0) if (++mm[3] == 0) ++mm[4];
-        acc[1] = (acc[1] >> 2) | (acc[2] << 30);
-        if ((mm[1] += acc[1]) < acc[1]) if (++mm[2] == 0) if (++mm[3] == 0) ++mm[4];
-        if ((mm[2] += acc[2]) < acc[2]) if (++mm[3] == 0) ++mm[4];
-        acc[2] = (acc[2] >> 2) | (acc[3] << 30);
-        if ((mm[2] += acc[2]) < acc[2]) if (++mm[3] == 0) ++mm[4];
-        if ((mm[3] += acc[3]) < acc[3]) ++mm[4];
-        acc[3] = (acc[3] >> 2);
-        if ((mm[3] += acc[3]) < acc[3]) ++mm[4];
-        // One more reduction if needed
-        if (mm[4] >= 4) {
-            mm[4] -= 4;
-            if ((mm[0] += 5) < 5) if (++mm[1] == 0) if (++mm[2] == 0) if (++mm[3] == 0) ++mm[4];
-        }
-        // Copy back to accumulator cc;
-        cc_[0] = mm[0]; cc_[1] = mm[1]; cc_[2] = mm[2]; cc_[3] = mm[3]; cc_[4] = mm[4];
+        if (off_ >= 16) mreduce();
     }
+}
+
+void Poly1305::mreduce() {
+    uint32_t i, j;
+    uint32_t mm[8];
+
+    // Pad 1 then 0 bytes to a full block
+    ((uint8_t*)ac_)[off_++] = 0x01;
+    while (off_ < 20) ((uint8_t*)ac_)[off_++] = 0x00;
+    cnt_++; off_ = 0;
+    mm[7] = mm[6] = mm[5] = mm[4] = 0; mm[3] = mm[2] = mm[1] = mm[0] = 0;
+    for (i = 0; (j = i) <= 4; i++) {
+        if ((cc_[i] += ac_[i]) < ac_[i]) {
+            if (++cc_[i + 1] == 0) if (++cc_[i + 2] == 0) if (++cc_[i + 3] == 0) ++cc_[i + 4];
+        }
+        for (j = 0; j < 4; j++) {
+            u64 u{ uint64_t(cc_[i]) * r_[j] };
+            u.u[1] += ((mm[i + j] += u.u[0]) < u.u[0]);
+            if ((mm[i + j + 1] += u.u[1]) < u.u[1]) ++mm[i + j + 2];
+        }
+    }
+    // Reduction by modulo (2^130 - 5)
+    ac_[0] = mm[4] & 0xFFFFFFFC; mm[4] &= 3;
+    ac_[1] = mm[5]; mm[5] = 0;
+    ac_[2] = mm[6]; mm[6] = 0;
+    ac_[3] = mm[7]; mm[7] = 0;
+    ac_[4] = 0;
+    if ((mm[0] += ac_[0]) < ac_[0]) if (++mm[1] == 0) if (++mm[2] == 0) if (++mm[3] == 0) ++mm[4];
+    ac_[0] = (ac_[0] >> 2) | (ac_[1] << 30);
+    if ((mm[0] += ac_[0]) < ac_[0]) if (++mm[1] == 0) if (++mm[2] == 0) if (++mm[3] == 0) ++mm[4];
+    if ((mm[1] += ac_[1]) < ac_[1]) if (++mm[2] == 0) if (++mm[3] == 0) ++mm[4];
+    ac_[1] = (ac_[1] >> 2) | (ac_[2] << 30);
+    if ((mm[1] += ac_[1]) < ac_[1]) if (++mm[2] == 0) if (++mm[3] == 0) ++mm[4];
+    if ((mm[2] += ac_[2]) < ac_[2]) if (++mm[3] == 0) ++mm[4];
+    ac_[2] = (ac_[2] >> 2) | (ac_[3] << 30);
+    if ((mm[2] += ac_[2]) < ac_[2]) if (++mm[3] == 0) ++mm[4];
+    if ((mm[3] += ac_[3]) < ac_[3]) ++mm[4];
+    ac_[3] = (ac_[3] >> 2);
+    if ((mm[3] += ac_[3]) < ac_[3]) ++mm[4];
+    // One more reduction if needed
+    if (mm[4] >= 4) {
+        mm[4] -= 4;
+        if ((mm[0] += 5) < 5) if (++mm[1] == 0) if (++mm[2] == 0) if (++mm[3] == 0) ++mm[4];
+    }
+    // Copy back to accumulator cc;
+    cc_[0] = mm[0]; cc_[1] = mm[1]; cc_[2] = mm[2]; cc_[3] = mm[3]; cc_[4] = mm[4];
 }
 
 void Poly1305::final(uint8_t tag[16])
 {
+    if (off_ > 0u) mreduce();
     // Add s to the result
     if ((cc_[0] += s_[0]) < s_[0]) if (++cc_[1] == 0) if (++cc_[2] == 0) if (++cc_[3] == 0) ++cc_[4];
     if ((cc_[1] += s_[1]) < s_[1]) if (++cc_[2] == 0) if (++cc_[3] == 0) ++cc_[4];
@@ -320,4 +329,3 @@ void Poly1305::hash(uint8_t tag[16], const uint8_t* pMsg, size_t cbBytes)
 		tag[i+2] = ((uint8_t*)cc)[i+2]; tag[i+3] = ((uint8_t*)cc)[i+3];
 	}
 }
-

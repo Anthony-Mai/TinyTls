@@ -49,12 +49,16 @@ struct Poly1305 {
     uint32_t r_[4];
     uint32_t s_[4];
     uint32_t cc_[5];
+    uint32_t ac_[5];
+    uint32_t off_, cnt_;
 
 public:
     Poly1305(const Chacha20& cha);
     void add(const uint8_t* pMsg, size_t cbBytes);
     void final(uint8_t tag[16]);
 	void hash(uint8_t tag[16], const uint8_t* pMsg, size_t cbBytes);
+private:
+    void mreduce();
 };
 
 #endif //_CHACHA20_H_
