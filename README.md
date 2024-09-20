@@ -27,7 +27,7 @@ light weight open source TLS library written in C++ and supports the TLS 1.3.
 I want to demonstrate that a good light weight crypto library can be written
 in C++ and can be made more maintainable. TinyTls was once based on TinySsl,
 but I have re-written a lot of new code and get rid of legacy stuffs that are
-no londer relevant today. So there is no historic baggage in the package.
+no longer relevant today. So there is no historic baggage in the package.
 
 ***
 
